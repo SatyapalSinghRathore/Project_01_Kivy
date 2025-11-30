@@ -12,24 +12,18 @@ jobs:
 
     env:
       ANDROID_HOME: ${{ github.workspace }}/android-sdk
-      PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:$PATH
+      PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:$PATH:$PATH
 
     steps:
-      # 0️⃣ Install essential system tools first (tar, unzip, wget, git, etc.)
-      - name: Install essential system tools
-        run: |
-          sudo apt update
-          sudo apt install -y tar unzip wget git curl python3-pip python3-venv openjdk-11-jdk build-essential libncurses5 libffi-dev libssl-dev libsqlite3-dev
-
       # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Buildozer & Cython
+      # 2️⃣ Install Buildozer & dependencies via pip (no sudo)
       - name: Install Buildozer
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install buildozer cython
+          python3 -m pip install buildozer cython wheel
 
       # 3️⃣ Download Android cmdline-tools
       - name: Download Android cmdline-tools
@@ -45,7 +39,7 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      # 5️⃣ Install Android SDK packages
+      # 5️⃣ Install SDK packages
       - name: Install SDK packages
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;36.1.0"
@@ -54,7 +48,7 @@ jobs:
       - name: Build APK
         run: buildozer android debug
 
-      # 7️⃣ Upload APK artifact
+      # 7️⃣ Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
