@@ -41,5 +41,31 @@ jobs:
           python --version
           pip3 install --upgrade pip
 
-      # Install Buildozer dependencies
-      - name: Install Buildozer & Cytho
+      # Install Buildozer & Cython
+      - name: Install Buildozer & Cython
+        run: |
+          pip install --upgrade buildozer cython
+
+      # Install Android SDK cmdline-tools manually
+      - name: Install Android SDK cmdline-tools
+        run: |
+          mkdir -p $HOME/Android/Sdk/cmdline-tools
+          cd $HOME/Android/Sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip
+          mv cmdline-tools cmdline-tools-temp
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools-temp/* cmdline-tools/latest/
+          rm cmdline-tools.zip
+
+      # Accept Android SDK licenses
+      - name: Accept Android SDK licenses
+        run: |
+          export ANDROID_HOME=$HOME/Android/Sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          yes | sdkmanager --licenses
+
+      # Build APK with Buildozer
+      - name: Build APK
+        run: |
+          buildozer android debug
