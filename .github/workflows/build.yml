@@ -11,46 +11,44 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_HOME: ${{ github.workspace }}/android-sdk
-      PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:$PATH:$PATH
+      ANDROID_HOME: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
+      PATH: ${{ github.workspace }}/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/.buildozer/android/platform/android-sdk/platform-tools:${{ github.workspace }}/.buildozer/android/platform/android-sdk/tools/bin:${{ env.PATH }}
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Buildozer & dependencies via pip (no sudo)
+      # 2️⃣ Install system dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3 python3-pip python3-venv git zip unzip openjdk-11-jdk tar wget
+
+      # 3️⃣ Install Buildozer
       - name: Install Buildozer
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install buildozer cython wheel
-
-      # 3️⃣ Download Android cmdline-tools
-      - name: Download Android cmdline-tools
-        run: |
-          mkdir -p $ANDROID_HOME/cmdline-tools
-          cd $ANDROID_HOME/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip -q cmdline-tools.zip
-          mv cmdline-tools latest
-          rm cmdline-tools.zip
+          pip install --upgrade pip
+          pip install buildozer
 
       # 4️⃣ Accept Android SDK licenses
-      - name: Accept Android SDK licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-
-      # 5️⃣ Install SDK packages
-      - name: Install SDK packages
+      - name: Install Android SDK & Accept Licenses
         run: |
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;36.1.0"
 
-      # 6️⃣ Build APK
+      # 5️⃣ Build the APK
       - name: Build APK
-        run: buildozer android debug
+        run: |
+          buildozer android debug
 
-      # 7️⃣ Upload APK
+      # 6️⃣ Upload APK as artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MyKivyApp-debug.apk
+          name: app-debug.apk
           path: bin/*.apk
