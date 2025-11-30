@@ -17,12 +17,10 @@ jobs:
     steps:
       # 1️⃣ Checkout repository
       - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v4
 
-      # 2️⃣ Update Ubuntu packages
-      - name: Install system dependencies
+      # 2️⃣ Install system dependencies
+      - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y python3-pip python3-venv openjdk-11-jdk unzip git curl tar zip wget build-essential libncurses5 libffi-dev libssl-dev libsqlite3-dev
@@ -33,7 +31,7 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install buildozer cython
 
-      # 4️⃣ Install Android SDK cmdline-tools
+      # 4️⃣ Download Android cmdline-tools
       - name: Download Android cmdline-tools
         run: |
           mkdir -p $ANDROID_HOME/cmdline-tools
@@ -45,31 +43,20 @@ jobs:
 
       # 5️⃣ Accept Android SDK licenses
       - name: Accept Android SDK licenses
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      # 6️⃣ Install Android build-tools & platform
-      - name: Install Android SDK packages
+      # 6️⃣ Install Android SDK packages
+      - name: Install SDK packages
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;36.1.0"
 
-      # 7️⃣ Initialize Python virtualenv for Buildozer (optional)
-      - name: Setup Python virtualenv
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install buildozer cython
-
-      # 8️⃣ Build the APK
+      # 7️⃣ Build APK
       - name: Build APK
-        run: |
-          source venv/bin/activate
-          buildozer android debug
+        run: buildozer android debug
 
-      # 9️⃣ Upload the APK artifact
+      # 8️⃣ Upload APK artifact
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MyKivyApp-debug.apk
           path: bin/*.apk
