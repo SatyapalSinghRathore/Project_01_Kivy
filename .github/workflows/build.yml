@@ -2,93 +2,44 @@ name: Build Kivy APK
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # ----------------------------
-    # System dependencies
-    # ----------------------------
-    - name: Install system dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          python3.10 \
-          python3.10-venv \
-          python3-pip \
-          git \
-          zip unzip \
-          openjdk-17-jdk \
-          build-essential \
-          ccache \
-          libffi-dev \
-          libssl-dev \
-          libbz2-dev \
-          libsqlite3-dev \
-          zlib1g-dev
+      # Install system dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            python3 \
+            python3-venv \
+            python3-pip \
+            git \
+            zip unzip \
+            openjdk-17-jdk \
+            build-essential \
+            ccache \
+            libffi-dev \
+            libssl-dev \
+            libbz2-dev \
+            libsqlite3-dev \
+            zlib1g-dev \
+            wget
 
-    # ----------------------------
-    # Python environment
-    # ----------------------------
-    - name: Setup Python
-      run: |
-        python3.10 -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip
-        pip install buildozer cython==0.29.36
+      # Set Python alias
+      - name: Set Python3 alias
+        run: |
+          sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+          python --version
+          pip3 install --upgrade pip
 
-    # ----------------------------
-    # Android SDK
-    # ----------------------------
-    - name: Install Android SDK
-      run: |
-        ANDROID_SDK=$HOME/android-sdk
-        mkdir -p $ANDROID_SDK/cmdline-tools
-        cd $ANDROID_SDK
-
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        unzip -q commandlinetools-linux-11076708_latest.zip -d cmdline-tools-temp
-
-        rm -rf cmdline-tools/latest
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools-temp/cmdline-tools/* cmdline-tools/latest/
-
-        rm -rf cmdline-tools-temp commandlinetools-linux-11076708_latest.zip
-
-    - name: Set Android environment
-      run: |
-        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
-
-    - name: Install Android SDK packages
-      run: |
-        yes | sdkmanager --licenses
-        sdkmanager \
-          "platform-tools" \
-          "platforms;android-33" \
-          "build-tools;33.0.2"
-
-    # ----------------------------
-    # Build APK
-    # ----------------------------
-    - name: Build APK with Buildozer
-      run: |
-        source venv/bin/activate
-        buildozer android debug
-
-    # ----------------------------
-    # Upload APK
-    # ----------------------------
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: apk
-        path: bin/*.apk
+      # Install Buildozer dependencies
+      - name: Install Buildozer & Cytho
