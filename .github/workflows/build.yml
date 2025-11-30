@@ -13,10 +13,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt update
-        sudo apt install -y python3-pip python3-venv unzip wget openjdk-11-jdk
+        sudo apt install -y python3-pip python3-venv unzip wget openjdk-11-jdk git
 
     - name: Set up Android SDK
       run: |
@@ -36,4 +36,6 @@ jobs:
 
     - name: Build APK
       run: |
+        export ANDROID_HOME=$HOME/Android/Sdk
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
         buildozer android debug
